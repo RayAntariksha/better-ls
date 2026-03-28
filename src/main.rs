@@ -1,88 +1,84 @@
 use std::fs;
 use std::io;
+use std::path::Path;
+use colored::Colorize;
 
-fn main() {
-    let item_list = read("../zellij/").unwrap();
-    for item in item_list {
-        print_items(item);
+fn main() -> io::Result<()> {
+    let mut entries: Vec<_> = fs::read_dir("./")?
+        .filter_map(|e| e.ok())
+        .collect();
+
+    // Sort: directories first, then alphabetically
+    entries.sort_by_key(|e| {
+        let is_file = e.path().is_file();
+        (is_file, e.file_name())
+    });
+    println!("./");
+    for entry in entries {
+        print_item(&entry);
     }
+    println!("");
+
+    Ok(())
 }
 
-fn read(path: &str) -> io::Result<Vec<String>> {
-    let return_value: Vec<String> = fs::read_dir(path)?
-        .filter_map(|entry| entry.ok())
-        .filter_map(|entry| {
-            // file_name() gives the bare name (e.g., "main.rs" instead of "./main.rs")
-            entry.file_name()
-                .into_string() // Converts OsString to Result<String, OsString>
-                .ok()          // Converts Result to Option, discarding non-UTF8 names
-        })
-    .collect();
-    Ok(return_value)
-}
-fn print_items(item: String) {
-    if !item.contains('.'){
-        println!(" {}", item);
-    }else {
-        let split_item: Vec<_> = item.split('.').collect();
-        match split_item.last(){
-            Some(&"rs") => print!(" "),
-            Some(&"toml") => print!(" "),
-            Some(&"git") => print!(" "),
-            Some(&"gitignore") => print!(" "),
-            Some(&"lock") => print!(" "),
+fn print_item(entry: &fs::DirEntry) {
+    let path = entry.path();
+    let name = entry.file_name();
+    let name = name.to_string_lossy();
 
-            // Common programming languages
-            Some(&"c") => print!(" "),
-            Some(&"cpp") | Some(&"cc") | Some(&"cxx") => print!(" "),
-            Some(&"h") | Some(&"hpp") => print!(" "),
-            Some(&"py") => print!(" "),
-            Some(&"js") => print!(" "),
-            Some(&"ts") => print!(" "),
-            Some(&"java") => print!(" "),
-            Some(&"kt") | Some(&"kts") => print!(" "),
-            Some(&"go") => print!(" "),
-            Some(&"php") => print!(" "),
-            Some(&"rb") => print!(" "),
-            Some(&"swift") => print!(" "),
-            Some(&"cs") => print!("󰌛 "),
-            Some(&"sh") => print!(" "),
-            Some(&"bash") => print!(" "),
-
-            // Web stuff
-            Some(&"html") => print!(" "),
-            Some(&"css") => print!(" "),
-            Some(&"scss") => print!(" "),
-            Some(&"json") => print!(" "),
-            Some(&"yaml") | Some(&"yml") => print!(" "),
-            Some(&"xml") => print!("󰗀 "),
-
-            // Config & docs
-            Some(&"md") => print!(" "),
-            Some(&"txt") => print!(" "),
-            Some(&"ini") | Some(&"conf") => print!(" "),
-            Some(&"env") => print!(" "),
-
-            // Images
-            Some(&"png") | Some(&"jpg") | Some(&"jpeg") | Some(&"gif") | Some(&"webp") => print!(" "),
-            Some(&"svg") => print!("󰜡 "),
-            Some(&"ico") => print!(" "),
-
-            // Archives
-            Some(&"zip") | Some(&"tar") | Some(&"gz") | Some(&"rar") | Some(&"7z") => print!(" "),
-
-            // Audio / Video
-            Some(&"mp3") | Some(&"wav") | Some(&"flac") => print!(" "),
-            Some(&"mp4") | Some(&"mkv") | Some(&"avi") => print!(" "),
-
-            // Databases
-            Some(&"db") | Some(&"sqlite") => print!(" "),
-            Some(&"sql") => print!(" "),
-
-            // Default fallback
-            _ => print!(" "),
-        }
-        println!("{}", item);
+    // Directory
+    if path.is_dir() {
+        println!(" ├─   {}/", name.blue());
+        return;
     }
-    
+
+    // Special filenames (more important than extensions)
+    let icon = match name.as_ref() {
+        ".gitignore" => " ",
+        "Cargo.toml" => " ",
+        "Cargo.lock" => " ",
+        "Makefile" => "",
+        _ => get_icon_by_extension(&path),
+    };
+
+    println!(" ├─ {} {}", icon, name);
+}
+
+fn get_icon_by_extension(path: &Path) -> &'static str {
+    match path.extension().and_then(|e| e.to_str()) {
+        // Languages
+        Some("rs") => " ",
+        Some("c") => " ",
+        Some("cpp") | Some("cc") | Some("cxx") => " ",
+        Some("py") => " ",
+        Some("js") => " ",
+        Some("ts") => " ",
+        Some("java") => " ",
+        Some("kt") => " ",
+        Some("go") => " ",
+        Some("lua") => " ",
+
+        // Web
+        Some("html") => "",
+        Some("css") => "",
+        Some("json") => "",
+        Some("yaml") | Some("yml") => " ",
+
+        // Docs
+        Some("md") => " ",
+        Some("txt") => " ",
+
+        // Images
+        Some("png") | Some("jpg") | Some("jpeg") | Some("gif") => " ",
+
+        // Archives
+        Some("zip") | Some("tar") | Some("gz") | Some("rar") => " ",
+
+        // Media
+        Some("mp3") => " ",
+        Some("mp4") => " ",
+
+        _ => " ",
+    }
 }
