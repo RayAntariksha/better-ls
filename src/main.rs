@@ -1,9 +1,18 @@
-use std::fs;
-use std::io;
-use std::path::Path;
+use std::{fs, io, path::Path, env};
 use colored::Colorize;
 
 fn main() -> io::Result<()> {
+    let mut show_hidden_files: bool = false;
+    let args: Vec<String> = env::args().collect();
+    if args.len() > 1 {
+        
+    let arg = args[1].trim();
+    match arg {
+        "-a" => show_hidden_files = true,
+        _ => {println!("Unknown argument: {}", arg)}
+    }
+    }
+    
     let mut entries: Vec<_> = fs::read_dir("./")?
         .filter_map(|e| e.ok())
         .collect();
@@ -15,11 +24,24 @@ fn main() -> io::Result<()> {
     });
     println!("./");
     for entry in entries {
-        print_item(&entry);
+        if  show_hidden_files == true && is_hidden(&entry) == true{
+            print_item(&entry);
+        }else if is_hidden(&entry) == false{
+            print_item(&entry);
+        }
     }
     println!("");
 
     Ok(())
+}
+
+#[cfg(unix)]
+fn is_hidden(entry: &fs::DirEntry) -> bool{
+    if let Some(filename) = entry.file_name().to_str() {
+        filename.starts_with('.')
+    }else {
+        false
+    }
 }
 
 fn print_item(entry: &fs::DirEntry) {
