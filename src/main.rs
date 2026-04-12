@@ -1,21 +1,28 @@
-use std::{fs, io, path::Path, env};
+use std::{env, fs::{self}, io, path::Path};
 use colored::Colorize;
 
 fn main() -> io::Result<()> {
+    let mut path_to_show = "./";
     let mut show_hidden_files: bool = false;
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 {
         
-    let arg = args[1].trim();
-    match arg {
-        "-a" => show_hidden_files = true,
-        _ => {println!("Unknown argument: {}", arg)}
+        let arg = args[1].trim();
+        match arg {
+            "-a" => show_hidden_files = true,
+            _ => {path_to_show = arg}
+        }
     }
-    }
-    
-    let mut entries: Vec<_> = fs::read_dir("./")?
-        .filter_map(|e| e.ok())
-        .collect();
+    let mut entries: Vec<_>;
+    if let Ok(read_dir) = fs::read_dir(path_to_show) {
+        let dir_result = read_dir;
+        entries = dir_result
+            .filter_map(|e| e.ok())
+            .collect();
+        }else {
+            println!("No such directory as {}", path_to_show);
+            return Ok(());
+    }    
 
     // Sort: directories first, then alphabetically
     entries.sort_by_key(|e| {
