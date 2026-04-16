@@ -2,6 +2,12 @@
 A better version of the classic "ls" command written in rust. It is elegent and fast.
 <img width="568" height="241" alt="image" src="https://github.com/user-attachments/assets/048aae18-04f3-4cb9-91f7-95d6db235df6" />
 
+## Features
+Here are the featurs that are in this project but not in the old ls command -
+* Icons for many filetypes.
+* Tree-like view making it more intuitive.
+* "-size" flag for seeing the size of a directory.
+
 ## Contribution
 
 ``` bash

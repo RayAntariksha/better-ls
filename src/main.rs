@@ -1,8 +1,12 @@
-use std::{env, fs::{self}, io, path::Path};
+use std::{env, fs::{self}, io};
 use colored::Colorize;
 
+//Modules
+mod icons;
+mod file_operations;
+
 fn main() -> io::Result<()> {
-    let mut path_to_show = "./";
+    let mut path_to_show = ".";
     let mut show_hidden_files: bool = false;
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 {
@@ -10,6 +14,10 @@ fn main() -> io::Result<()> {
         let arg = args[1].trim();
         match arg {
             "-a" => show_hidden_files = true,
+            "-size" => {
+                println!("{}", file_operations::get_dir_size(path_to_show));
+                return Ok(());
+            },
             _ => {path_to_show = arg}
         }
     }
@@ -29,7 +37,7 @@ fn main() -> io::Result<()> {
         let is_file = e.path().is_file();
         (is_file, e.file_name())
     });
-    println!("./");
+    println!("{}/", path_to_show);
     for entry in entries {
         if  show_hidden_files == true && is_hidden(&entry) == true{
             print_item(&entry);
@@ -67,47 +75,10 @@ fn print_item(entry: &fs::DirEntry) {
         ".gitignore" => " ",
         "Cargo.toml" => " ",
         "Cargo.lock" => " ",
-        "Makefile" => "",
-        _ => get_icon_by_extension(&path),
+        "Makefile" => "",
+        _ => icons::get_icon_by_extension(&path),
     };
 
     println!(" ├─ {} {}", icon, name);
 }
 
-fn get_icon_by_extension(path: &Path) -> &'static str {
-    match path.extension().and_then(|e| e.to_str()) {
-        // Languages
-        Some("rs") => " ",
-        Some("c") => " ",
-        Some("cpp") | Some("cc") | Some("cxx") => " ",
-        Some("py") => " ",
-        Some("js") => " ",
-        Some("ts") => " ",
-        Some("java") => " ",
-        Some("kt") => " ",
-        Some("go") => " ",
-        Some("lua") => " ",
-
-        // Web
-        Some("html") => "",
-        Some("css") => "",
-        Some("json") => "",
-        Some("yaml") | Some("yml") => " ",
-
-        // Docs
-        Some("md") => " ",
-        Some("txt") => " ",
-
-        // Images
-        Some("png") | Some("jpg") | Some("jpeg") | Some("gif") => " ",
-
-        // Archives
-        Some("zip") | Some("tar") | Some("gz") | Some("rar") => " ",
-
-        // Media
-        Some("mp3") => " ",
-        Some("mp4") => " ",
-
-        _ => " ",
-    }
-}
